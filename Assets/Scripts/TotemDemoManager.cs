@@ -7,6 +7,7 @@ using TotemEntities;
 using TotemEntities.DNA;
 using TotemServices.DNA;
 using TMPro;
+using DG.Tweening;
 
 namespace TotemDemo
 {
@@ -34,12 +35,14 @@ namespace TotemDemo
         [SerializeField] private TMP_InputField legacyGameIdInput;
         [SerializeField] private TMP_InputField dataToCompoareInput;
         [SerializeField] private UIAssetsList assetList;
+        [SerializeField] private UIAssetsListItem itemList;
         [SerializeField] private UIAssetLegacyRecordsList legacyRecordsList;
         [SerializeField] private Animator popupAnimator;
 
         //Meta Data
         private TotemUser _currentUser;
         private List<TotemDNADefaultAvatar> _userAvatars;
+        private List<TotemDNADefaultItem> _userItems;
 
         //Default Avatar reference - use for your game
         private TotemDNADefaultAvatar firstAvatar;
@@ -91,13 +94,17 @@ namespace TotemDemo
 
                 //Avatars
                 _userAvatars = avatars;
-                firstAvatar = avatars[0];
+                firstAvatar = avatars.Count > 0 ? avatars[0] : null;
                 //
 
                 //UI Example Methods
                 BuildAvatarList();
-                UILoadingScreen.Instance.Hide();
-                // ShowAvatarRecords();
+                ShowAvatarRecords();
+
+            });
+
+            totemCore.GetUserItems<TotemDNADefaultItem>(user, TotemDNAFilter.DefaultAvatarFilter, (items) =>
+            {
 
             });
         }
@@ -105,7 +112,7 @@ namespace TotemDemo
 
         public void ShowAvatarRecords()
         {
-            GetLegacyRecords(firstAvatar, (records) =>
+            GetLegacyRecords(firstAvatar, TotemAssetType.avatar, (records) =>
             {
                 UIAssetLegacyRecordsList.Instance.BuildList(firstAvatar, records);
                 UILoadingScreen.Instance.Hide();
@@ -117,10 +124,10 @@ namespace TotemDemo
         /// <summary>
         /// Add a new Legacy Record to a specific Totem Asset.
         /// </summary>
-        public void AddLegacyRecord(object asset, int data)
+        public void AddLegacyRecord(object asset, TotemAssetType assetType, int data)
         {
             UILoadingScreen.Instance.Show();
-            totemCore.AddLegacyRecord(asset, data.ToString(), (record) =>
+            totemCore.AddLegacyRecord(asset, assetType, data.ToString(), (record) =>
             {
                 legacyRecordsList.AddRecordToList(record, true);
                 UILoadingScreen.Instance.Hide();
@@ -133,17 +140,17 @@ namespace TotemDemo
         /// </summary>
         public void AddLegacyToFirstAvatar(int data)
         {
-            AddLegacyRecord(firstAvatar, data);
+            AddLegacyRecord(firstAvatar, TotemAssetType.avatar, data);
         }
 
-        public void GetLegacyRecords(object asset, UnityAction<List<TotemLegacyRecord>> onSuccess)
+        public void GetLegacyRecords(object asset, TotemAssetType assetType, UnityAction<List<TotemLegacyRecord>> onSuccess)
         {
-            totemCore.GetLegacyRecords(asset, onSuccess, legacyGameIdInput.text);
+            totemCore.GetLegacyRecords(asset, assetType, onSuccess, string.IsNullOrEmpty(legacyGameIdInput.text) ? _gameId : legacyGameIdInput.text);
         }
 
         public void GetLastLegacyRecord(UnityAction<TotemLegacyRecord> onSuccess)
         {
-            GetLegacyRecords(firstAvatar, (records) => { onSuccess.Invoke(records[records.Count - 1]); });
+            GetLegacyRecords(firstAvatar, TotemAssetType.avatar, (records) => { onSuccess.Invoke(records[records.Count - 1]); });
         }
 
         public void CompareLastLegacyRecord()
@@ -165,6 +172,11 @@ namespace TotemDemo
         private void BuildAvatarList()
         {
             assetList.BuildList(_userAvatars);
+        }
+
+        private void BuildItemList()
+        {
+            
         }
 
         private void OnGameIdInputEndEdit(string text)
