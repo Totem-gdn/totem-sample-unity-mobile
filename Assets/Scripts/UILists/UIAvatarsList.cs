@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class UIAssetItem : MonoBehaviour
+public class UIAvatarsList : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()

@@ -38,6 +38,7 @@ namespace TotemDemo
         [SerializeField] private UIAssetsListItem itemList;
         [SerializeField] private UIAssetLegacyRecordsList legacyRecordsList;
         [SerializeField] private Animator popupAnimator;
+        [SerializeField] private UIAssetItem itemsList;
 
         //Meta Data
         private TotemUser _currentUser;
