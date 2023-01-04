@@ -14,7 +14,9 @@ public class UIAssetsListBase<T> : MonoBehaviour
 
     [SerializeField] private Transform contentTransform;
     [SerializeField] private GameObject uiItemPrefab;
-    [SerializeField] private GameObject pickerBlocker;
+
+    [SerializeField] private Button nextItemButton;
+    [SerializeField] private Button previousItemButton;
 
     private int _currentItemIndex = 0;
     private float _distanceBetweenItems = 0f;
@@ -38,32 +40,51 @@ public class UIAssetsListBase<T> : MonoBehaviour
     }
 
     /// <summary>
-    /// Method that works when OnItemSelected event is raised
-    /// </summary>
-    /// <param name="selectedItemIndex">Index of a selected item</param>
-    private void ItemSelected(int selectedItemIndex)
-    {
-        if (selectedItemIndex != _currentItemIndex)
-        {
-            pickerBlocker.SetActive(true);
-            SwitchAsset(selectedItemIndex);
-
-            _currentItemIndex = selectedItemIndex;
-            LoadLegacy();
-        }
-    }
-
-    /// <summary>
     /// Animation for asset switching in the list
     /// </summary>
     /// <param name="selectedItemIndex">Index of a selected item</param>
-    private void SwitchAsset(int selectedItemIndex)
+    private void SwitchAssetAnim(int selectedItemIndex)
     {
         float animationDistance = (_currentItemIndex - selectedItemIndex) * _distanceBetweenItems;
         Vector2 contentEndPoint = new Vector2(contentTransform.localPosition.x + animationDistance, contentTransform.localPosition.y);
 
         contentTransform.DOLocalMove(contentEndPoint, itemSwitchingDuration)
-            .OnComplete(() => pickerBlocker.SetActive(false));
+            .OnComplete(() => ChangeButtonsInteractability(true));
+    }
+
+    private int GetValidItemIndex(int newItemIndex)
+    {
+        if (newItemIndex >= _uiItems.Count)
+        {
+            return 0;
+        }
+        if(newItemIndex < 0)
+        {
+            return _uiItems.Count - 1;
+        }
+
+        return newItemIndex;
+    }
+
+    private void ChangeButtonsInteractability(bool isInteractable)
+    {
+        nextItemButton.interactable = isInteractable;
+        previousItemButton.interactable = isInteractable;
+    }
+
+    /// <summary>
+    /// Method to switch currently selected item
+    /// </summary>
+    /// <param name="indexStep">Step to increment/decrement item index</param>
+    public void SwitchAsset(int indexStep)
+    {
+        var selectedItemIndex = GetValidItemIndex(_currentItemIndex + indexStep);
+        ChangeButtonsInteractability(false);
+
+        SwitchAssetAnim(selectedItemIndex);
+
+        _currentItemIndex = selectedItemIndex;
+        LoadLegacy();
     }
 
     /// <summary>
@@ -79,13 +100,18 @@ public class UIAssetsListBase<T> : MonoBehaviour
     /// Instantiates new UI element, initializes it and adds to the list
     /// </summary>
     /// <param name="assetData">Totem Asset's data</param>
-    public void AddUIItem(T assetData)
+    public void InitializeAssetsList(List<T> assetData)
     {
-        var uiItem = Instantiate(uiItemPrefab, contentTransform).GetComponent<UIItemBase<T>>();
-        _uiItems.Add(uiItem);
+        foreach (var data in assetData)
+        {
+            var uiItem = Instantiate(uiItemPrefab, contentTransform).GetComponent<UIItemBase<T>>();
+            _uiItems.Add(uiItem);
 
-        uiItem.Initialize(assetData, _uiItems.Count - 1);
-        uiItem.OnItemSelected += ItemSelected;
+            uiItem.Initialize(data, _uiItems.Count - 1);
+        }
+
+        bool isItemsSwitchingEnabled = _uiItems.Count > 1;
+        ChangeButtonsInteractability(isItemsSwitchingEnabled);
     }
 
     /// <summary>
@@ -95,7 +121,6 @@ public class UIAssetsListBase<T> : MonoBehaviour
     {
         foreach(var item in _uiItems)
         {
-            item.OnItemSelected -= ItemSelected;
             Destroy(item.gameObject);
         }
 

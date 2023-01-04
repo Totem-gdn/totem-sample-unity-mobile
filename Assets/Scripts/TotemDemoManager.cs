@@ -161,21 +161,13 @@ namespace TotemDemo
 
         private void BuildAvatarList()
         {
-            foreach (var avatar in _userAvatars)
-            {
-                avatarsList.AddUIItem(avatar);
-            }
-
+            avatarsList.InitializeAssetsList(_userAvatars);
             avatarsList.LoadLegacy();
         }
 
         private void BuildItemList()
         {
-            foreach (var item in _userItems)
-            {
-                itemsList.AddUIItem(item);
-            }
-
+            itemsList.InitializeAssetsList(_userItems);
             itemsList.LoadLegacy();
         }
 
