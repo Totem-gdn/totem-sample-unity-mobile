@@ -32,13 +32,8 @@ namespace TotemDemo
         [SerializeField] private TextMeshProUGUI profileNameText;
 
         [Header("Legacy UI")]
-        [SerializeField] private TMP_InputField legacyGameIdInput;
-        [SerializeField] private TMP_InputField dataToCompoareInput;
-        [SerializeField] private UIAssetsList assetList;
-        [SerializeField] private UIAssetsListItem itemList;
-        [SerializeField] private UIAssetLegacyRecordsList legacyRecordsList;
-        [SerializeField] private Animator popupAnimator;
-        [SerializeField] private UIAssetItem itemsList;
+        [SerializeField] private UIItemsList itemsList;
+        [SerializeField] private UIAvatarsList avatarsList;
 
         //Meta Data
         private TotemUser _currentUser;
@@ -47,6 +42,10 @@ namespace TotemDemo
 
         //Default Avatar reference - use for your game
         private TotemDNADefaultAvatar firstAvatar;
+        private TotemDNADefaultItem firstItem;
+
+        private bool _isAvatarsLoaded = false;
+        private bool _isItemsLoaded = false;
 
         private void Awake()
         {
@@ -66,8 +65,6 @@ namespace TotemDemo
         void Start()
         {
             totemCore = new TotemCore(_gameId);
-
-            legacyGameIdInput.onEndEdit.AddListener(OnGameIdInputEndEdit);
         }
 
         #region USER AUTHENTICATION
@@ -84,40 +81,55 @@ namespace TotemDemo
             //Using default filter with a default avatar model. You can implement your own filters and/or models
             totemCore.GetUserAvatars<TotemDNADefaultAvatar>(user, TotemDNAFilter.DefaultAvatarFilter, (avatars) =>
             {
-                googleLoginObject.SetActive(false);
-                profileNameObject.SetActive(true);
                 profileNameText.SetText(user.Name);
 
-                //UI
-                assetList.ClearList();
-                legacyRecordsList.ClearList();
-                
+                avatarsList.Clear();
 
-                //Avatars
                 _userAvatars = avatars;
                 firstAvatar = avatars.Count > 0 ? avatars[0] : null;
-                //
+               // AddLegacyRecord(firstAvatar, TotemAssetType.avatar, 2);
 
-                //UI Example Methods
-                BuildAvatarList();
-                ShowAvatarRecords();
+                if (_userAvatars.Count > 0)
+                {
+                    BuildAvatarList();
+                }
 
+                _isAvatarsLoaded = true;
+                CheckLoadingEnded();
             });
 
-            totemCore.GetUserItems<TotemDNADefaultItem>(user, TotemDNAFilter.DefaultAvatarFilter, (items) =>
+            //Using default filter with a default item model. You can implement your own filters and/or models
+            totemCore.GetUserItems<TotemDNADefaultItem>(user, TotemDNAFilter.DefaultItemFilter, (items) =>
             {
+                _userItems = items;
+                firstItem = items.Count > 0 ? items[0] : null;
+               AddLegacyRecord(firstItem, TotemAssetType.item, 1);
 
+                itemsList.Clear();
+
+                if (_userItems.Count > 0)
+                {
+                    BuildItemList();
+                }
+
+                _isItemsLoaded = true;
+                CheckLoadingEnded();
             });
         }
 
-
-        public void ShowAvatarRecords()
+        private void Test(List<TotemLegacyRecord> legacyRecords)
         {
-            GetLegacyRecords(firstAvatar, TotemAssetType.avatar, (records) =>
+            Debug.Log(legacyRecords.Count);
+        }
+
+        private void CheckLoadingEnded()
+        {
+            if(_isAvatarsLoaded && _isItemsLoaded)
             {
-                UIAssetLegacyRecordsList.Instance.BuildList(firstAvatar, records);
+                googleLoginObject.SetActive(false);
+                profileNameObject.SetActive(true);
                 UILoadingScreen.Instance.Hide();
-            });
+            }
         }
         #endregion
 
@@ -130,41 +142,18 @@ namespace TotemDemo
             UILoadingScreen.Instance.Show();
             totemCore.AddLegacyRecord(asset, assetType, data.ToString(), (record) =>
             {
-                legacyRecordsList.AddRecordToList(record, true);
                 UILoadingScreen.Instance.Hide();
-                popupAnimator.Play("Write Legacy");
             });
-        }
-
-        /// <summary>
-        /// Add a new Legacy Record to the first Totem Avatar.
-        /// </summary>
-        public void AddLegacyToFirstAvatar(int data)
-        {
-            AddLegacyRecord(firstAvatar, TotemAssetType.avatar, data);
         }
 
         public void GetLegacyRecords(object asset, TotemAssetType assetType, UnityAction<List<TotemLegacyRecord>> onSuccess)
         {
-            totemCore.GetLegacyRecords(asset, assetType, onSuccess, string.IsNullOrEmpty(legacyGameIdInput.text) ? _gameId : legacyGameIdInput.text);
+            totemCore.GetLegacyRecords(asset, assetType, onSuccess, _gameId);
         }
 
         public void GetLastLegacyRecord(UnityAction<TotemLegacyRecord> onSuccess)
         {
             GetLegacyRecords(firstAvatar, TotemAssetType.avatar, (records) => { onSuccess.Invoke(records[records.Count - 1]); });
-        }
-
-        public void CompareLastLegacyRecord()
-        {
-            GetLastLegacyRecord((record) =>
-            {
-                string valueToCheckText = dataToCompoareInput.text;
-                if (valueToCheckText.Equals(record.data))
-                {
-                    popupAnimator.Play("Read Legacy");
-                }
-            }
-            );
         }
         #endregion
 
@@ -172,17 +161,22 @@ namespace TotemDemo
 
         private void BuildAvatarList()
         {
-            assetList.BuildList(_userAvatars);
+            foreach (var avatar in _userAvatars)
+            {
+                avatarsList.AddUIItem(avatar);
+            }
+
+            avatarsList.LoadLegacy();
         }
 
         private void BuildItemList()
         {
-            
-        }
+            foreach (var item in _userItems)
+            {
+                itemsList.AddUIItem(item);
+            }
 
-        private void OnGameIdInputEndEdit(string text)
-        {
-            ShowAvatarRecords();
+            itemsList.LoadLegacy();
         }
 
         #endregion
