@@ -15,6 +15,7 @@ public class UIAssetsListBase<T> : MonoBehaviour
     [SerializeField] private Transform contentTransform;
     [SerializeField] private GameObject uiItemPrefab;
 
+    [SerializeField] private GameObject assetIcon;
     [SerializeField] private Button nextItemButton;
     [SerializeField] private Button previousItemButton;
 
@@ -114,6 +115,12 @@ public class UIAssetsListBase<T> : MonoBehaviour
         ChangeButtonsInteractability(isItemsSwitchingEnabled);
     }
 
+    public void SetLoginPanelsVisibility(bool isVisible)
+    {
+        legaciesList.SetLoginTipVisibility(isVisible);
+        assetIcon.SetActive(isVisible);
+    }
+
     /// <summary>
     /// Clears all items from the list
     /// </summary>
@@ -124,6 +131,9 @@ public class UIAssetsListBase<T> : MonoBehaviour
             Destroy(item.gameObject);
         }
 
+        legaciesList.Clear();
         _uiItems.Clear();
+
+        ChangeButtonsInteractability(false);
     }
 }

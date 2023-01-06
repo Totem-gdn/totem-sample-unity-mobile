@@ -10,6 +10,7 @@ public class UIAssetAvatar : UIItemBase<TotemDNADefaultAvatar>
     [SerializeField] private TMP_Text humanHairColorTMP;
     [SerializeField] private TMP_Text humanEyeColorTMP;
     [SerializeField] private TMP_Text humanSkinColorTMP;
+    [SerializeField] private TMP_Text hairStyle;
     [SerializeField] private TMP_Text primaryColorTMP;
 
     /// <summary>
@@ -27,6 +28,7 @@ public class UIAssetAvatar : UIItemBase<TotemDNADefaultAvatar>
         humanHairColorTMP.text = avatarData.human_hair_color.ToString();
         humanEyeColorTMP.text = avatarData.human_eye_color.ToString();
         humanSkinColorTMP.text = avatarData.human_skin_color.ToString();
+        hairStyle.text = avatarData.hair_styles;
         primaryColorTMP.text = avatarData.primary_color.ToString();
     }
 
