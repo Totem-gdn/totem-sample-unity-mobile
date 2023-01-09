@@ -117,7 +117,6 @@ namespace TotemDemo
 
                 _userAvatars = avatars;
                 firstAvatar = avatars.Count > 0 ? avatars[0] : null;
-                GetLegacyRecords(firstAvatar, TotemAssetType.avatar, TestSuccess);
                // AddLegacyRecord(firstAvatar, TotemAssetType.avatar, 2);
 
                 if (_userAvatars.Count > 0)
@@ -134,7 +133,7 @@ namespace TotemDemo
             {
                 _userItems = items;
                 firstItem = items.Count > 0 ? items[0] : null;
-              // AddLegacyRecord(firstItem, TotemAssetType.item, 1);
+                AddLegacyRecord(firstItem, TotemAssetType.item, 1);
 
                 itemsList.Clear();
 
@@ -146,11 +145,6 @@ namespace TotemDemo
                 _isItemsLoaded = true;
                 CheckLoadingEnded();
             });
-        }
-
-        private void TestSuccess(List<TotemLegacyRecord> legacyRecords)
-        {
-            Debug.Log(legacyRecords.Count);
         }
 
         private void CheckLoadingEnded()
